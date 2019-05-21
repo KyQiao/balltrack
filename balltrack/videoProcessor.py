@@ -1,13 +1,14 @@
 import cv2
 import numpy as np
 import imutils
+from imutils.video import FPS
 import json
 from pathlib import Path
 import os
 
 
 class videoProcessor(object):
-    """docstring for videoProcessor"""
+    """basic class for tracking"""
 
     def __init__(self, file, setting={}):
         super(videoProcessor, self).__init__()
@@ -54,7 +55,7 @@ class videoProcessor(object):
     def checkFolder(self, name):
         folderPath = os.path.join(os.getcwd(), name)
         if not Path(folderPath).is_dir():
-            Path.mkdir(folderPath)
+            os.mkdir(folderPath)
 
     def readSettings(self):
         with open(self.conf_file, 'r') as f:
@@ -68,6 +69,13 @@ class videoProcessor(object):
     def outputSetting(self):
         return json.dumps(self.setting, indent=2)
 
+    def fpsInit(self):
+        self.fps = FPS().start()
+
+    def fpsUpdate(self):
+        self.fps.update()
+        self.fps.stop()
+
     def timeskip(self):
         start_frame_number = self.setting["skiptime"]*self.setting["fps"]
         cap = cv2.VideoCapture(self.setting["file"])
@@ -77,8 +85,11 @@ class videoProcessor(object):
     def resize(self, frame):
         # return the height and width of resized frame
         frame = imutils.resize(frame,
-                width=self.setting["size"][0]//self.setting["resize"])
+                               width=self.setting["size"][0]//self.setting["resize"])
         return frame
+
+    def save(self, d):
+        self.setting.update(d)
 
     def process(self):
         para = self.setting
@@ -105,15 +116,5 @@ class videoProcessor(object):
                 key = cv2.waitKey(1) & 0xFF
                 if key == ord('q'):
                     break
-
-
-if __name__ == '__main__':
-    setting = {"skiptime": 0,
-               "method": "CSRT",
-               "feature": "Hough",
-               "fps": 25,
-               "size": (1680, 1277),
-               "resize": 4
-               }
-    test = videoProcessor(r'../test/h264_bubble5_crf28.avi', setting=setting)
-    test.process()
+            cap.release()
+            cv2.destroyAllWindows()

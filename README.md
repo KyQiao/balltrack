@@ -13,14 +13,14 @@ tools: other tools used in tracking
 ## Installation
 
 ```bash
-python setup.py bdistwhell
+python setup.py bdist_wheel
 cd dist
 pip install balltrack-xxx-xxx.wheel
 ```
 
 
 
-Install with the current version
+Reinstall with the current version 
 
 ```
 pip install --upgrade --no-deps --force-reinstall balltrack

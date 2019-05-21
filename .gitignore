@@ -25,12 +25,19 @@ wheels/
 *.egg
 MANIFEST
 
+/.vscode/
+/.vscode/*
 /test
+/balltrack/todo/
 /balltrack/todo/*
 /balltrack/save_conf/*
 /balltrack/test.py
+/balltrack/save_conf/
+
 *.avi
 
+/save_conf
+/save_conf/*
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.

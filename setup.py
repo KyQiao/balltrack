@@ -9,10 +9,7 @@ setup(
     # dependency
     install_requires=["opencv-contrib-python>=4.0","imutils>0.5"],
 
-    packages=['balltrack'],
-    package_data={
-        "balltrack": ["*.py"],
-    },
+    packages=find_packages(),
 
 
     # metadata

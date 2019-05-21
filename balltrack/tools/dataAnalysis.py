@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 
 class trace(object):
-    """docstring for trace"""
+    """simple tool to analysis the trace"""
 
     def __init__(self, filename):
         super(trace, self).__init__()
@@ -64,4 +64,3 @@ c.modify(2,4)\n\
 c.delete_modify(1,4)\n\
 c.delete_modify(2,4)\n\
 c.trace()\n")
-

@@ -1,10 +1,14 @@
-from videoProcess import videoProcessor
+'''
+trakcer options
+{"csrt","kcf","boosting","mil","tld","medianflow","mosse"}
+'''
+from .videoProcessor import videoProcessor
 import cv2
 import imutils
 
 
 class balltrack(videoProcessor):
-    """docstring for balltrack"""
+    """basic class for normal balltrack"""
 
     def trackparaInit(self):
         OPENCV_OBJECT_TRACKERS = {
@@ -19,7 +23,7 @@ class balltrack(videoProcessor):
             tracker = OPENCV_OBJECT_TRACKERS[self.setting["tracker"]]()
         else:
             # using csrt by default
-            self.setting.update({"tracker": "csrt"})
+            self.save({"tracker": "csrt"})
             tracker = cv2.TrackerCSRT_create()
         return tracker
 
@@ -32,16 +36,25 @@ class balltrack(videoProcessor):
         if "initBB" not in self.setting:
             initBB = cv2.selectROI("frame", frame, fromCenter=False,
                                    showCrosshair=True)
-            self.setting.update({"initBB": initBB})
+            self.save({"initBB": initBB})
         else:
             initBB = tuple(self.setting["initBB"])
         tracker.init(frame, initBB)
 
     def balltracklabel(self):
-        self.setting.update({"class": "balltrack"})
+        self.save({"class": "balltrack"})
 
-    def Houghtest():
-        pass
+    def drwaInfo(self, H,frame):
+        info = [
+            ("Tracker", self.setting["tracker"]),
+            ("FPS", "{:.2f}".format(self.fps.fps())),
+        ]
+
+        # loop over the info tuples and draw them on our frame
+        for (i, (k, v)) in enumerate(info):
+            text = "{}: {}".format(k, v)
+            cv2.putText(frame, text, (10, H - ((i * 20) + 20)),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
     def process(self):
         # skiptime
@@ -61,8 +74,9 @@ class balltrack(videoProcessor):
                     'param2': 20,
                     'minRadius': 7,
                     'maxRadius': 20}
-            self.setting.update({"para": para})
+            self.save({"para": para})
 
+        self.fpsInit()
         trace = []
         t = 0
         while(cap.isOpened()):
@@ -79,6 +93,8 @@ class balltrack(videoProcessor):
                 (x, y, w, h) = [int(v) for v in box]
                 cv2.rectangle(frame, (x, y), (x + w, y + h),
                               (0, 255, 0), 2)
+
+                self.fpsUpdate()
                 imCrop = frame[y: y+h, x:x+w]
                 gray = cv2.cvtColor(imCrop, cv2.COLOR_BGR2GRAY)
                 gray = cv2.medianBlur(gray, 5)
@@ -95,6 +111,7 @@ class balltrack(videoProcessor):
                             frame, (x+x_ball, y+y_ball),
                             2, (0, 0, 255), -1)
                         trace.append([x+x_ball, y+y_ball, r, t])
+                self.drwaInfo(H,frame)
 
             cv2.imshow('frame', frame)
 
@@ -105,28 +122,5 @@ class balltrack(videoProcessor):
             t += 1
         self.balltracklabel()
         self.saveSettings()
-
-
-if __name__ == '__main__':
-    '''
-    trakcer options
-    {"csrt","kcf","boosting","mil","tld","medianflow","mosse",}
-    '''
-
-    setting = {"skiptime": 5,
-               "tracker": "csrt",
-               "feature": "Hough",
-               "fps": 25,
-               "size": (1920, 1080),
-               "resize": 4
-               }
-    # test = videoProcessor(r'C:\Users\kyqiao\Desktop\ball\MVI_0517.MP4')
-
-    test = balltrack(
-        r'C:\Users\kyqiao\Desktop\ball\MVI_0517.MP4', setting=setting)
-
-    # print(test.outputSetting())
-    test.process()
-
-# ref https://www.pyimagesearch.com/2018/07/30/opencv-object-tracking/
-# yellow object http://aishack.in/tutorials/tracking-colored-objects-opencv/
+        cap.release()
+        cv2.destroyAllWindows()
