@@ -17,9 +17,9 @@ class balltrack(videoProcessor):
             print("Please Using ffprobe to count frame numbers\n\
 ffprobe -v error -select_streams v:0 -show_entries \
 stream=nb_frames -of default=nokey=1:noprint_wrappers=1 \
-input.video\
-set totalFrame in dict")
-        self.trace = np.zeros([self.setting["totalFrame"], 4], dtype=np.int16)
+input.video\n \
+set totalFrame in dict\n")
+        self.trace = np.zeros([self.setting["totalFrame"]-1, 4], dtype=np.int16)
         self.t = 0
         # You can change the range after initialize
         if "lower_range" in self.setting:
@@ -33,6 +33,14 @@ set totalFrame in dict")
             self.setting.update(
                 {"lower_range": [20, 100, 100], "upper_range": [30, 255, 255]})
         self.saveSettings()
+
+    def preprocess(self, frame):
+        # An api left for preprocess the image
+        return frame
+
+    def output(self,imCrop,out):
+        # An api left for output the image
+        return imCrop
 
     def trackparaInit(self):
         OPENCV_OBJECT_TRACKERS = {
@@ -84,7 +92,7 @@ set totalFrame in dict")
         gray = cv2.cvtColor(imCrop, cv2.COLOR_BGR2GRAY)
         gray = cv2.medianBlur(gray, 5)
         balls = cv2.HoughCircles(
-            gray, cv2.HOUGH_GRADIENT, 1, 100, **HoughPara)
+            gray, cv2.HOUGH_GRADIENT, 1,  **HoughPara)
         if balls is None:
             pass
         else:
@@ -102,7 +110,7 @@ set totalFrame in dict")
         hsv = cv2.cvtColor(imCrop, cv2.COLOR_BGR2HSV)
         mask = cv2.inRange(hsv, self.lower_range, self.upper_range)
 
-        balls = cv2.HoughCircles(mask, cv2.HOUGH_GRADIENT, 1, 100, **HoughPara)
+        balls = cv2.HoughCircles(mask, cv2.HOUGH_GRADIENT, 1, **HoughPara)
         if balls is None:
             pass
         else:
@@ -141,7 +149,8 @@ set totalFrame in dict")
         if "HoughPara" in self.setting:
             HoughPara = self.setting["HoughPara"]
         else:
-            HoughPara = {'param1': 10,
+            HoughPara = {'minDist': 100,
+                         'param1': 10,
                          'param2': 20,
                          'minRadius': 7,
                          'maxRadius': 20}
@@ -153,19 +162,23 @@ set totalFrame in dict")
         while(cap.isOpened()):
             # Capture frame-by-frame
             ret, frame = cap.read()
-            if frame is None:
+            if not ret:
                 break
 
             frame = self.resize(frame)
             (H, W) = frame.shape[:2]
 
+            frame = self.preprocess(frame)
+
             (success, box) = tracker.update(frame)
             if success:
                 (x, y, w, h) = [int(v) for v in box]
-                cv2.rectangle(frame, (x, y), (x + w, y + h),
-                              (0, 255, 0), 2)
 
                 imCrop = frame[y: y+h, x:x+w]
+                imCrop = self.output(self,imCrop)
+
+                cv2.rectangle(frame, (x, y), (x + w, y + h),
+                              (0, 255, 0), 2)
                 self.fpsUpdate()
                 feature(frame, imCrop, HoughPara, x, y)
                 self.drwaInfo(H, frame)
