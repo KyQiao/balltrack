@@ -1,5 +1,4 @@
 import cv2
-import numpy as np
 import imutils
 from imutils.video import FPS
 import json
@@ -29,7 +28,6 @@ class videoProcessor(object):
 
         if self.conf:
             self.readSettings()
-            print("conf load success")
 
         self.updateSetting(setting)
         self.saveSettings()
@@ -94,11 +92,13 @@ class videoProcessor(object):
     def process(self):
         para = self.setting
         if "class" in para:
+            print("Explicitly naming the class is recommended")
             # add new class py file to balltrack
             import balltrack
             f = getattr(balltrack, para["class"])
-            f.process(self)
-
+            _ = f(self.setting["file"])
+            _.process()
+            self.__dict__ = _.__dict__.copy()
         else:
             cap = self.timeskip()
 

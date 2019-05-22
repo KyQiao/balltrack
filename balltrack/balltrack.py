@@ -5,10 +5,34 @@ trakcer options
 from .videoProcessor import videoProcessor
 import cv2
 import imutils
+import numpy as np
 
 
 class balltrack(videoProcessor):
     """basic class for normal balltrack"""
+
+    def __init__(self, file, setting={}):
+        videoProcessor.__init__(self, file, setting=setting)
+        assert "totalFrame" in self.setting, \
+            print("Please Using ffprobe to count frame numbers\n\
+ffprobe -v error -select_streams v:0 -show_entries \
+stream=nb_frames -of default=nokey=1:noprint_wrappers=1 \
+input.video\
+set totalFrame in dict")
+        self.trace = np.zeros([self.setting["totalFrame"], 4], dtype=np.int16)
+        self.t = 0
+        # You can change the range after initialize
+        if "lower_range" in self.setting:
+            self.lower_range = np.array(
+                self.setting["lower_range"], dtype=np.uint8)
+            self.upper_range = np.array(
+                self.setting["upper_range"], dtype=np.uint8)
+        else:
+            self.lower_range = np.array([20, 100, 100], dtype=np.uint8)
+            self.upper_range = np.array([30, 255, 255], dtype=np.uint8)
+            self.setting.update(
+                {"lower_range": [20, 100, 100], "upper_range": [30, 255, 255]})
+        self.saveSettings()
 
     def trackparaInit(self):
         OPENCV_OBJECT_TRACKERS = {
@@ -44,7 +68,7 @@ class balltrack(videoProcessor):
     def balltracklabel(self):
         self.save({"class": "balltrack"})
 
-    def drwaInfo(self, H,frame):
+    def drwaInfo(self, H, frame):
         info = [
             ("Tracker", self.setting["tracker"]),
             ("FPS", "{:.2f}".format(self.fps.fps())),
@@ -55,6 +79,53 @@ class balltrack(videoProcessor):
             text = "{}: {}".format(k, v)
             cv2.putText(frame, text, (10, H - ((i * 20) + 20)),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+
+    def HoughTransform(self, frame, imCrop, HoughPara, x, y, saveData=True):
+        gray = cv2.cvtColor(imCrop, cv2.COLOR_BGR2GRAY)
+        gray = cv2.medianBlur(gray, 5)
+        balls = cv2.HoughCircles(
+            gray, cv2.HOUGH_GRADIENT, 1, 100, **HoughPara)
+        if balls is None:
+            pass
+        else:
+            for ball in balls[0]:
+                x_ball = int(ball[0])
+                y_ball = int(ball[1])
+                r = int(ball[2])
+                frame = cv2.circle(
+                    frame, (x+x_ball, y+y_ball),
+                    2, (0, 0, 255), -1)
+                if saveData:
+                    self.trace[self.t, :] = [x+x_ball, y+y_ball, r, self.t]
+
+    def HoughTransform_Mask(self, frame, imCrop, HoughPara, x, y, saveData=True):
+        hsv = cv2.cvtColor(imCrop, cv2.COLOR_BGR2HSV)
+        mask = cv2.inRange(hsv, self.lower_range, self.upper_range)
+
+        balls = cv2.HoughCircles(mask, cv2.HOUGH_GRADIENT, 1, 100, **HoughPara)
+        if balls is None:
+            pass
+        else:
+            for ball in balls[0]:
+                x_ball = int(ball[0])
+                y_ball = int(ball[1])
+                r = int(ball[2])
+                frame = cv2.circle(
+                    frame, (x+x_ball, y+y_ball), 2, (0, 0, 255), -1)
+                if saveData:
+                    self.trace[self.t, :] = [x+x_ball, y+y_ball, r, self.t]
+
+    def methodInit(self):
+        METHODS = {
+            "HT": self.HoughTransform,
+            "HTMask": self.HoughTransform_Mask}
+        if "feature" in self.setting:
+            feature = METHODS[self.setting["feature"]]
+        else:
+            # using csrt by default
+            self.save({"feature": "HT"})
+            feature = self.HoughTransform
+        return feature
 
     def process(self):
         # skiptime
@@ -67,18 +138,18 @@ class balltrack(videoProcessor):
         self.trackInit(cap, tracker)
 
         # parameter for houghcircle
-        if "para" in self.setting:
-            para = self.setting["para"]
+        if "HoughPara" in self.setting:
+            HoughPara = self.setting["HoughPara"]
         else:
-            para = {'param1': 10,
-                    'param2': 20,
-                    'minRadius': 7,
-                    'maxRadius': 20}
-            self.save({"para": para})
+            HoughPara = {'param1': 10,
+                         'param2': 20,
+                         'minRadius': 7,
+                         'maxRadius': 20}
+            self.save({"HoughPara": HoughPara})
 
+        feature = self.methodInit()
         self.fpsInit()
-        trace = []
-        t = 0
+
         while(cap.isOpened()):
             # Capture frame-by-frame
             ret, frame = cap.read()
@@ -94,24 +165,10 @@ class balltrack(videoProcessor):
                 cv2.rectangle(frame, (x, y), (x + w, y + h),
                               (0, 255, 0), 2)
 
-                self.fpsUpdate()
                 imCrop = frame[y: y+h, x:x+w]
-                gray = cv2.cvtColor(imCrop, cv2.COLOR_BGR2GRAY)
-                gray = cv2.medianBlur(gray, 5)
-                balls = cv2.HoughCircles(
-                    gray, cv2.HOUGH_GRADIENT, 1, 100, **para)
-                if balls is None:
-                    continue
-                else:
-                    for ball in balls[0]:
-                        x_ball = int(ball[0])
-                        y_ball = int(ball[1])
-                        r = int(ball[2])
-                        frame = cv2.circle(
-                            frame, (x+x_ball, y+y_ball),
-                            2, (0, 0, 255), -1)
-                        trace.append([x+x_ball, y+y_ball, r, t])
-                self.drwaInfo(H,frame)
+                self.fpsUpdate()
+                feature(frame, imCrop, HoughPara, x, y)
+                self.drwaInfo(H, frame)
 
             cv2.imshow('frame', frame)
 
@@ -119,7 +176,7 @@ class balltrack(videoProcessor):
             if key == ord('q'):
                 break
 
-            t += 1
+            self.t += 1
         self.balltracklabel()
         self.saveSettings()
         cap.release()
