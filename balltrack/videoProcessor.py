@@ -37,8 +37,8 @@ class videoProcessor(object):
         if (not bool(setting)) and not self.conf:
             self.setting = {"file": str(self.file.resolve()),
                             "skiptime": 0,
-                            "method": "CSRT",
-                            "feature": "Hough",
+                            "tracker": "csrt",
+                            "feature": "HT",
                             "fps": 25,
                             "size": (1024, 860),
                             }
@@ -105,7 +105,7 @@ class videoProcessor(object):
             while(cap.isOpened()):
                 # Capture frame-by-frame
                 ret, frame = cap.read()
-                if frame is None:
+                if not ret:
                     break
 
                 frame = self.resize(frame)

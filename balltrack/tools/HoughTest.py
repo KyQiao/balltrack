@@ -19,6 +19,8 @@ class HoughTest(balltrack):
 
         if "HoughPara" in self.setting:
             HoughPara = self.setting["HoughPara"]
+            cv2.createTrackbar('minDist', 'frame',
+                               HoughPara["param1"], 1000, nothing)
             cv2.createTrackbar('threshold1', 'frame',
                                HoughPara["param1"], 100, nothing)
             cv2.createTrackbar('threshold2', 'frame',
@@ -29,6 +31,7 @@ class HoughTest(balltrack):
                                HoughPara["minRadius"], 100, nothing)
 
         else:
+            cv2.createTrackbar('minDist', 'frame', 50, 1000, nothing)
             cv2.createTrackbar('threshold1', 'frame', 2, 100, nothing)
             cv2.createTrackbar('threshold2', 'frame', 1, 100, nothing)
             cv2.createTrackbar('maxRadius', 'frame', 2, 100, nothing)
@@ -41,13 +44,15 @@ class HoughTest(balltrack):
                 break
             frame = self.resize(frame)
             (H, W) = frame.shape[:2]
-
+            frame = self.preprocess(frame)
+            minDist = cv2.getTrackbarPos('minDist', 'frame')
             param1 = cv2.getTrackbarPos('threshold1', 'frame')
             param2 = cv2.getTrackbarPos('threshold2', 'frame')
             minRadius = cv2.getTrackbarPos('minRadius', 'frame')
             maxRadius = cv2.getTrackbarPos('maxRadius', 'frame')
 
             HoughPara = {
+                "minDist":minDist,
                 "param1": param1,
                 "param2": param2,
                 "minRadius": minRadius,
