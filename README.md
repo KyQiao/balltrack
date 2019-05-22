@@ -23,7 +23,7 @@ pip install balltrack-xxx-xxx.wheel
 Reinstall with the current version 
 
 ```
-pip install --upgrade --no-deps --force-reinstall balltrack
+pip install -U balltrack-xxx-xxx.wheel
 ```
 
 ## Usage
@@ -32,7 +32,7 @@ pip install --upgrade --no-deps --force-reinstall balltrack
 from balltrack import balltrack
 setting = {"skiptime": 5,
             "tracker": "csrt",
-            "feature": "Hough",
+            "feature": "HT",
             "fps": 25,
             "size": (1920, 1080),
             "resize": 4}
@@ -40,3 +40,5 @@ test = balltrack("test.avi",setting=setting)
 test.process()
 ```
 
+### trackers
+`csrt`, `kcf`, `boosting`, `mil`, `tld`, `medianflow`, `mosse`,
