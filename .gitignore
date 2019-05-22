@@ -33,7 +33,7 @@ MANIFEST
 /balltrack/save_conf/*
 /balltrack/test.py
 /balltrack/save_conf/
-
+*.bat
 *.avi
 
 /save_conf
