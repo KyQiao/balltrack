@@ -38,7 +38,7 @@ set totalFrame in dict\n")
         # An api left for preprocess the image
         return frame
 
-    def output(self,imCrop,out):
+    def output(self,imCrop):
         # An api left for output the image
         return imCrop
 
@@ -61,7 +61,6 @@ set totalFrame in dict\n")
 
     def trackInit(self, cap, tracker):
         ret, frame = cap.read()
-        self.setting
         frame = imutils.resize(
             frame, width=self.setting["size"][0]//self.setting["resize"])
         cv2.imshow('frame', frame)
@@ -73,7 +72,7 @@ set totalFrame in dict\n")
             initBB = tuple(self.setting["initBB"])
         tracker.init(frame, initBB)
 
-    def balltracklabel(self):
+    def label(self):
         self.save({"class": "balltrack"})
 
     def drwaInfo(self, H, frame):
@@ -175,7 +174,7 @@ set totalFrame in dict\n")
                 (x, y, w, h) = [int(v) for v in box]
 
                 imCrop = frame[y: y+h, x:x+w]
-                imCrop = self.output(self,imCrop)
+                imCrop = self.output(imCrop)
 
                 cv2.rectangle(frame, (x, y), (x + w, y + h),
                               (0, 255, 0), 2)
@@ -190,7 +189,7 @@ set totalFrame in dict\n")
                 break
 
             self.t += 1
-        self.balltracklabel()
+        self.label()
         self.saveSettings()
         cap.release()
         cv2.destroyAllWindows()
