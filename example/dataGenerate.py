@@ -10,16 +10,7 @@ import matplotlib.pyplot as plt
 
 setting = {
     "skiptime": 10,
-    "totalFrame": 11306,
-    "feature": "HT",
-    "fps": 25,
-    "size": [
-        1920,
-        1080
-    ],
-    "tracker": "kcf",
-    "resize": 2,
-    "class": "balltrack"
+    "resize": 2
 }
 
 

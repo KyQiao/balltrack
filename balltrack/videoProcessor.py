@@ -21,7 +21,7 @@ class videoProcessor(object):
         assert self.file.exists(), print("file not find")
         self.filename = self.file.parts[-1].split('.')[0]
 
-        # filename with full path absolute
+        # filename with full absolute path 
         self.conf_file = os.path.join(
             os.getcwd(), "save_conf", self.filename+".json")
         self.conf = Path(self.conf_file).is_file()
@@ -39,16 +39,20 @@ class videoProcessor(object):
                             "skiptime": 0,
                             "tracker": "csrt",
                             "feature": "HT",
-                            "fps": 25,
-                            "size": (1024, 860),
                             }
+            self.generalInfo()
         # has input but no record
         elif bool(setting) and (not self.conf):
-            self.setting = {"file": str(self.file.resolve())}
+            self.setting = {"file": str(self.file.resolve()),
+                            "skiptime": 0,
+                            "tracker": "csrt",
+                            "feature": "HT",}
+            self.generalInfo()
             self.setting.update(setting)
         # has record, update setting
         elif bool(setting) and self.conf:
             self.setting.update(setting)
+        
 
     def checkFolder(self, name):
         folderPath = os.path.join(os.getcwd(), name)
@@ -79,6 +83,16 @@ class videoProcessor(object):
         cap = cv2.VideoCapture(self.setting["file"])
         cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame_number)
         return cap
+
+    def generalInfo(self):
+        video = cv2.VideoCapture(self.setting["file"])
+        addInfo =  {"totalFrame":int(video.get(cv2.CAP_PROP_FRAME_COUNT)),
+                    "fps": int(video.get(cv2.CAP_PROP_FPS)),
+                    "size": (int(video.get(cv2.CAP_PROP_FRAME_WIDTH)), 
+                            int(video.get(cv2.CAP_PROP_FRAME_HEIGHT)))}
+        video.release()
+        self.setting.update(addInfo)
+                            
 
     def resize(self, frame):
         # return the height and width of resized frame

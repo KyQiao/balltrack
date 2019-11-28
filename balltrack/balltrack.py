@@ -13,13 +13,9 @@ class balltrack(videoProcessor):
 
     def __init__(self, file, setting={}):
         videoProcessor.__init__(self, file, setting=setting)
-        assert "totalFrame" in self.setting, \
-            print("Please Using ffprobe to count frame numbers\n\
-ffprobe -v error -select_streams v:0 -show_entries \
-stream=nb_frames -of default=nokey=1:noprint_wrappers=1 \
-input.video\n \
-set totalFrame in dict\n")
-        self.trace = np.zeros([self.setting["totalFrame"]-1, 4], dtype=np.int16)
+        assert "totalFrame" in self.setting,print("emmm????")
+        start_frame_number = self.setting["skiptime"]*self.setting["fps"]
+        self.trace = np.zeros([self.setting["totalFrame"]-start_frame_number, 4], dtype=np.int16)
         self.t = 0
         # You can change the range after initialize
         if "lower_range" in self.setting:
@@ -174,7 +170,7 @@ set totalFrame in dict\n")
                 (x, y, w, h) = [int(v) for v in box]
 
                 imCrop = frame[y: y+h, x:x+w]
-                imCrop = self.output(imCrop)
+                imCrop = self.output(self,imCrop)
 
                 cv2.rectangle(frame, (x, y), (x + w, y + h),
                               (0, 255, 0), 2)
