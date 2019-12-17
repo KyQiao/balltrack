@@ -170,7 +170,7 @@ class balltrack(videoProcessor):
                 (x, y, w, h) = [int(v) for v in box]
 
                 imCrop = frame[y: y+h, x:x+w]
-                imCrop = self.output(self,imCrop)
+                imCrop = self.output(imCrop)
 
                 cv2.rectangle(frame, (x, y), (x + w, y + h),
                               (0, 255, 0), 2)
